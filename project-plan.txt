@@ -1,0 +1,90 @@
+The "Multi-Agent Financial Analyst"
+
+The Real-World Problem: Our current system is good, but it's a one-trick pony. A real analyst doesn't just look at one document. They synthesize information from multiple sources and perform multi-step reasoning. A senior analyst might ask, "Based on the main risks cited in Google's latest 10-K, how does that compare to the latest tech industry news?" Our current system can't answer that.
+
+Our Solution: We will evolve our RAG pipeline into a multi-agent system. We will build a central Orchestrator Agent that can understand a user's query, break it down, and delegate tasks to a team of specialized "expert" agents. This is a direct implementation of the "Mixture of Experts" (MoE) concept you mentioned.
+
+Agentic Workflow (in Mermaid)
+graph TD
+    subgraph "User Interface"
+        SPA[SPA Frontend]
+    end
+
+    subgraph "Backend Services on GCP (Docker Compose)"
+        Orchestrator["Orchestrator Agent<br>(FastAPI + LangChain)"]
+        
+        subgraph "Tool Belt"
+            Tool1["10-K Report Tool<br>(Our existing RAG pipeline)"]
+            Tool2["Web Search Tool<br>(For current events & competitor info)"]
+            Tool3["Financial Data Tool<br>(Queries structured data from PostgreSQL)"]
+        end
+
+        VectorDB[(ChromaDB)]
+        Postgres[(PostgreSQL)]
+    end
+
+    subgraph "External Services"
+        LLM[Gemini API]
+    end
+
+    %% Data Flow
+    UserQuery["User asks complex question"] --> SPA
+    SPA -- "1. Sends Query" --> Orchestrator
+    
+    Orchestrator -- "2. Analyzes Query" --> LLM
+    LLM -- "3. Decides which tool to use" --> Orchestrator
+    
+    Orchestrator -- "4a. 'What are the risks?'" --> Tool1
+    Tool1 -- "Searches 10-K" --> VectorDB
+    
+    Orchestrator -- "4b. 'What's the latest tech news?'" --> Tool2
+    
+    Orchestrator -- "4c. 'What was last year's revenue?'" --> Tool3
+    Tool3 -- "SQL Query" --> Postgres
+    
+    subgraph "Agentic Loop"
+        Tool1 -- "Returns context" --> Orchestrator
+        Tool2 -- "Returns articles" --> Orchestrator
+        Tool3 -- "Returns financial data" --> Orchestrator
+    end
+    
+    Orchestrator -- "5. Synthesizes final answer" --> LLM
+    LLM -- "6. Returns final answer" --> Orchestrator
+    Orchestrator -- "7. Streams answer to UI" --> SPA
+
+The Tech Stack & Justification
+
+    Core Framework: We will introduce LangChain.
+
+        Justification: LangChain is the industry-standard library for building agentic workflows. It provides the building blocks for creating orchestrators (agents), defining tools, and managing the state of multi-step thought processes. It's the perfect tool for this next phase.
+
+    Orchestrator Agent: This will be a new piece of logic in our main.py. It will use Gemini via LangChain to analyze the user's query and decide which tool to call.
+
+    The "Tools":
+
+        10-K Report Tool: We will refactor our existing RAG logic into a self-contained "tool" that the orchestrator can call.
+
+        Web Search Tool: We'll integrate a simple web search API (like Tavily, which has a free tier) to give our system access to real-time information.
+
+        Financial Data Tool: We will use the PostgreSQL database from our previous project. We can pretend it holds structured financial data (e.g., a table of quarterly revenues). This tool will allow the orchestrator to answer questions by writing and executing SQL queries.
+
+
+
+The Project Plan
+----------------
+    Phase 1: Refactor to a "Tool." We will take our current RAG logic and wrap it in a LangChain Tool interface. This modularizes our existing work and makes it available to the new agentic system.
+
+    Phase 2: Build the Orchestrator. We will create the main agent in main.py. Initially, it will only have access to the one tool we just created. We will test it to ensure it can correctly route simple questions to our 10-K tool.
+
+    Phase 3: Add New Tools. We will incrementally add the Web Search tool and the SQL Database tool. We will test the orchestrator's ability to correctly choose between the three tools based on the user's question.
+
+    Phase 4: Enhance the Frontend. The UI will need to be updated to handle more complex, multi-step answers. A great feature would be to show the agent's "thought process"—which tools it's calling and what it finds—before displaying the final answer.
+
+Anticipated Challenges
+
+    Prompt Engineering: The prompt that powers the Orchestrator is critical. It must be very good at understanding the user's intent and choosing the correct tool.
+
+    Tool Failures: What happens if the web search fails or the SQL query returns an error? The orchestrator needs to be robust enough to handle tool failures gracefully.
+
+    Context Management: For a multi-step query, the agent needs to remember what it has already found. This involves managing a "scratchpad" or memory, which adds complexity.
+
