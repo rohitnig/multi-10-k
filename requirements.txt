@@ -10,6 +10,9 @@ google-generativeai==0.7.2
 # ChromaDB client compatible with the server version 0.5.x
 chromadb==0.5.3
 
+# Web scraping for document ingestion
+beautifulsoup4==4.12.3
+
 # LangChain Dependencies
 langchain==0.2.10
 langchain-core==0.2.23

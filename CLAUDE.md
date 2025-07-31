@@ -43,10 +43,13 @@ The project follows a 4-phase implementation:
 ### Phase 1 Achievements ✅
 - **LangChain Tool Integration**: Successfully converted RAG pipeline into `query_10k_report` tool
 - **Agent Architecture**: Implemented ReAct agent using LangChain with Ollama + Gemma:2b model
-- **Docker Orchestration**: Fixed and optimized multi-service Docker setup
+- **Docker Orchestration**: Fixed and optimized multi-service Docker setup with proper health checks
 - **Vector Database**: ChromaDB integration working with 10-K document ingestion
-- **Error Handling**: Added robust parsing error handling to AgentExecutor
-- **End-to-End Functionality**: Agent successfully answers queries about Google's 2023 10-K risks
+- **Custom Output Parser**: Implemented markdown-stripping parser to handle Gemma's formatting tendencies
+- **ReAct Prompt Optimization**: Enhanced prompt with explicit formatting rules and few-shot examples
+- **Parameter Tuning**: Optimized Ollama parameters (temperature=0.1, top_p=0.9) for consistent outputs
+- **Dependency Management**: Fixed beautifulsoup4 requirement for document ingestion
+- **End-to-End Functionality**: Agent successfully answers queries about Google's 2023 10-K risks in single iteration
 
 ## Key Technical Considerations
 
@@ -157,11 +160,25 @@ docker compose up chromadb
 docker compose up -d
 ```
 
+**Missing beautifulsoup4 Dependency**
+If ingestion fails with `ModuleNotFoundError: No module named 'bs4'`:
+```bash
+# Rebuild the ingestion container after updating requirements.txt
+docker compose build ingestion_runner
+docker compose --profile ingest up
+```
+
 **Container Build Issues**
 Force rebuild containers if Dockerfile changes aren't being picked up:
 ```bash
 docker compose build --no-cache
 docker compose up -d
+```
+
+**ReAct Parsing Errors**
+If agent gets stuck in parsing loops with markdown formatting errors, the custom output parser should handle this automatically. Check logs for parsing details:
+```bash
+docker compose logs -f api
 ```
 
 ### Data Ingestion Issues
