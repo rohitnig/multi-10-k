@@ -17,7 +17,7 @@ The system follows an agentic workflow with these key components:
   - Financial Data Tool (SQL queries against PostgreSQL)
 - **Backend**: Dockerized services running on GCP
 - **Frontend**: SPA (Single Page Application)
-- **LLM**: Ollama with Gemma:2b model for local inference (Phase 1), with Gemini API integration for tools
+- **LLM**: Ollama with Phi-3:mini model for local inference (Phase 1), with Gemini API integration for tools
 
 ### Data Flow
 
@@ -42,14 +42,16 @@ The project follows a 4-phase implementation:
 
 ### Phase 1 Achievements ✅
 - **LangChain Tool Integration**: Successfully converted RAG pipeline into `query_10k_report` tool
-- **Agent Architecture**: Implemented ReAct agent using LangChain with Ollama + Gemma:2b model
+- **Agent Architecture**: Implemented ReAct agent using LangChain with Ollama + Phi-3:mini model
 - **Docker Orchestration**: Fixed and optimized multi-service Docker setup with proper health checks
 - **Vector Database**: ChromaDB integration working with 10-K document ingestion
-- **Custom Output Parser**: Implemented markdown-stripping parser to handle Gemma's formatting tendencies
+- **Model Migration**: Upgraded from Gemma:2b to Phi-3:mini for superior ReAct reasoning and format compliance
+- **Advanced Output Parser**: Implemented parser with markdown stripping, log filtering, and format validation
 - **ReAct Prompt Optimization**: Enhanced prompt with explicit formatting rules and few-shot examples
 - **Parameter Tuning**: Optimized Ollama parameters (temperature=0.1, top_p=0.9) for consistent outputs
+- **Logging Enhancement**: Added timestamps and suppressed tool noise during agent execution
 - **Dependency Management**: Fixed beautifulsoup4 requirement for document ingestion
-- **End-to-End Functionality**: Agent successfully answers queries about Google's 2023 10-K risks in single iteration
+- **End-to-End Functionality**: Agent successfully answers queries with real 10-K data in single iteration
 
 ## Key Technical Considerations
 
@@ -80,7 +82,7 @@ The `old_app/` folder contains the original RAG pipeline implementation that wil
 
 ### Multi-Agent System (Current - Phase 1 Complete)
 ```bash
-# First-time setup: Pull the Gemma:2b model (one-time only)
+# First-time setup: Pull the Phi-3:mini model (one-time only)
 docker compose --profile setup up
 
 # Start all services (ChromaDB, Ollama, Agent)
@@ -89,7 +91,7 @@ docker compose up -d
 # Run with data ingestion (if ChromaDB is empty)
 docker compose --profile ingest up
 
-# View logs for debugging
+# View logs for debugging (now with timestamps)
 docker compose logs -f api
 docker compose logs -f chromadb  
 docker compose logs -f ollama
@@ -139,11 +141,15 @@ pytest -v
 
 **Model Not Found Error**
 ```
-OllamaEndpointNotFoundError: Maybe your model is not found and you should pull the model with `ollama pull gemma:2b`
+OllamaEndpointNotFoundError: Maybe your model is not found and you should pull the model with `ollama pull phi3:mini`
 ```
 Solution: Run the setup profile once to download the model:
 ```bash
 docker compose --profile setup up
+```
+Or pull directly if the setup service has networking issues:
+```bash
+docker exec rag_ollama ollama pull phi3:mini
 ```
 
 **Ollama Health Check Failing**
@@ -176,10 +182,18 @@ docker compose up -d
 ```
 
 **ReAct Parsing Errors**
-If agent gets stuck in parsing loops with markdown formatting errors, the custom output parser should handle this automatically. Check logs for parsing details:
+If agent gets stuck in parsing loops or format errors, the enhanced output parser should handle this automatically by:
+- Stripping markdown formatting
+- Filtering interfering log messages
+- Validating ReAct format structure
+
+Check logs for parsing details:
 ```bash
 docker compose logs -f api
 ```
+
+**Log Interference Issues**
+If you see "Invalid Format" errors, ensure tool logging isn't interfering with agent responses. The system now suppresses tool logs during execution and filters them in the parser.
 
 ### Data Ingestion Issues
 If the agent can't find relevant documents, ensure the 10-K data is properly ingested:
@@ -196,7 +210,7 @@ docker compose --profile ingest up
 
 ✅ **COMPLETED**: Multi-agent financial analyst system with LangChain integration
 - **Architecture**: ReAct agent with specialized 10-K report tool
-- **LLM Integration**: Ollama + Gemma:2b for agent reasoning, Gemini for tool synthesis  
+- **LLM Integration**: Ollama + Phi-3:mini for agent reasoning, Gemini for tool synthesis  
 - **Vector Database**: ChromaDB with Google 2023 10-K filing
 - **Containerization**: Full Docker orchestration with health checks
 - **Testing**: Pytest suite with mocked dependencies
