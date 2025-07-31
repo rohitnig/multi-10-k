@@ -1,0 +1,22 @@
+# Main Application Dependencies
+fastapi==0.111.0
+uvicorn==0.30.1
+python-dotenv==1.0.1
+pydantic==2.8.2
+requests==2.32.3
+sentence-transformers==3.0.1
+google-generativeai==0.7.2
+
+# ChromaDB client compatible with the server version 0.5.x
+chromadb==0.5.3
+
+# LangChain Dependencies
+langchain==0.2.10
+langchain-core==0.2.23
+langchain-google-genai==1.0.7
+langchain-community==0.2.10
+langchainhub==0.1.20
+
+# Testing Dependencies
+pytest==8.3.2
+pytest-mock==3.14.0

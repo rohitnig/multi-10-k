@@ -1,0 +1,23 @@
+# Start from a lean Python base image
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements file into the container
+COPY requirements.txt .
+
+# Install the Python dependencies
+# --no-cache-dir reduces image size
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the application code into the container
+# The volume mount in docker-compose.yml will override this for development
+COPY ./app /app
+COPY ./tests /app/tests
+
+# No port exposure needed for agent script
+
+# Command to run the LangChain agent script
+CMD ["python", "main.py"]
+
