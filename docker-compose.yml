@@ -67,12 +67,15 @@ services:
       timeout: 10s
       retries: 3
 
-  setup_gemma:
+  setup_phi3:
     image: ollama/ollama
-    container_name: setup_gemma
-    command: ["pull", "gemma:2b"]
+    container_name: setup_phi3
+    command: ["pull", "phi3:mini"]
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
     volumes:
       - ollama_data:/root/.ollama
     profiles:

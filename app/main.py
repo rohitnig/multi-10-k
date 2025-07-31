@@ -10,19 +10,25 @@ from tools.file_tools import query_10k_report
 from langchain_community.llms import Ollama
 
 # --- CONFIGURATION ---
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 # --- CUSTOM OUTPUT PARSER ---
 
 class MarkdownStripReActOutputParser(ReActSingleInputOutputParser):
-    """Custom ReAct output parser that strips markdown formatting before parsing."""
+    """Custom ReAct output parser that strips markdown formatting and validates format before parsing."""
     
     def parse(self, text: str):
         # Strip markdown formatting from the text
         cleaned_text = self._strip_markdown(text)
+        # Validate and clean the format
+        validated_text = self._validate_format(cleaned_text)
         # Use the parent parser on the cleaned text
-        return super().parse(cleaned_text)
+        return super().parse(validated_text)
     
     def _strip_markdown(self, text: str) -> str:
         """Remove markdown formatting from text."""
@@ -35,6 +41,20 @@ class MarkdownStripReActOutputParser(ReActSingleInputOutputParser):
         # Clean up any trailing asterisks
         text = re.sub(r'\s*\*+$', '', text, flags=re.MULTILINE)
         return text
+    
+    def _validate_format(self, text: str) -> str:
+        """Validate and clean the ReAct format."""
+        lines = text.strip().split('\n')
+        cleaned_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            # Skip empty lines and log messages that interfere with parsing
+            if not line or 'INFO:' in line or 'ERROR:' in line or 'WARNING:' in line:
+                continue
+            cleaned_lines.append(line)
+        
+        return '\n'.join(cleaned_lines)
 
 # --- AGENT SETUP ---
 
@@ -46,7 +66,7 @@ def main():
 
     # 1. Initialize the LLM with optimized parameters for consistency
     llm = Ollama(
-        model="gemma:2b",
+        model="phi3:mini",
         base_url="http://ollama:11434",
         temperature=0.1,      # Lower temperature for more consistent formatting
         top_p=0.9,           # Reduce randomness in token selection
@@ -58,76 +78,71 @@ def main():
     tools = [query_10k_report]
     logger.info(f"Agent is equipped with the following tools: {[tool.name for tool in tools]}")
 
-    # 3. Create custom ReAct prompt optimized for Gemma's formatting
-    # This addresses the specific issue of Gemma producing both Action and Final Answer
-    prompt_template = """You are a meticulous financial analyst assistant. Your job is to answer questions about a company's 10-K report by reasoning step-by-step. You can use external tools or respond directly — but you must follow strict formatting rules. You MUST base your 'Thought' and 'Final Answer' ONLY on the information from the 'Observation'. Do not use any other knowledge. If the answer is not in the Observation, you must state that the information is not available.
+    # 3. Create custom ReAct prompt optimized for Phi-3's formatting
+    # This addresses the specific issue of models producing both Action and Final Answer
+    prompt_template = """
+You are a helpful financial analyst assistant.
 
-You have access to the following tools:
+Your job is to answer user questions about a company’s 10-K report. To do this, you can either use tools to retrieve relevant data or give a final answer if you already have the information.
 
+You can use the following tools:
 {tools}
 
-🔁 Decision Rule (ReAct format)
+To use a tool, follow this exact format:
 
-At each step, you must decide:
+Thought: Do I need to use a tool? Yes  
+Action: [tool_name from {tool_names}]  
+Action Input: [description of what to search or extract]  
+Observation: [result from the tool]
 
-    🤖 If you need to use a tool → use this EXACT format (NO markdown, NO bold):
+If you are ready to answer the user, use this format:
 
-Thought: Do I need to use a tool? Yes.
-Action: [tool name from this list: {tool_names}]
-Action Input: [input to the tool]
-Observation: [tool result will appear here]
+Thought: Do I need to use a tool? No. I have the final answer.  
+Final Answer: [your complete response here]
 
-    🧠 If you are ready to respond → use this EXACT format (NO markdown, NO bold):
+CRITICAL FORMATTING RULES:  
+1. You must either use a tool (with Action) or give a final answer — **never both at the same time**
+2. Always start your response with "Thought:" 
+3. If giving a final answer, use exactly: "Final Answer: [your response]"
+4. Keep responses concise and well-formatted
 
-Thought: Do I need to use a tool? No. I have the final answer.
-Final Answer: [your response to the user]
+---
 
-⚠️ CRITICAL: Use plain text only. NO **bold**, NO *italics*, NO markdown formatting.
+Example 1 (using a tool):
 
-❌ Important Rule (DO NOT BREAK)
+Question: What are the revenue trends over the past 3 years?  
+Thought: I need to retrieve revenue data.  
+Action: query_10k_report  
+Action Input: [search for revenue trends over 3 years]  
+Observation: [Revenue in 2021: $X; 2022: $Y; 2023: $Z]
 
-At every step, you must produce either an Action OR a Final Answer, never both.
-✅ Correct Examples (EXACT format to copy)
+---
 
-Example 1: Uses a tool
+Example 2 (giving a final answer):
 
-Question: What were the total revenues for the last fiscal year?
-Thought: I need to find the revenue figure in the 10-K report.
-Action: query_10k_report
-Action Input: total revenues for the last fiscal year
+Question: What are the main risk factors?  
+Thought: I already have a summary of the risks from earlier.  
+Final Answer: The key risks include [brief summary from the report].
 
-Example 2: Provides a final answer  
+---
 
-Question: What are the main risk factors?
-Thought: The previous observation gave the list of risk factors. I can now answer.
-Final Answer: The main risk factors are market volatility, regulatory pressure, and increased competition.
+Example 3 (❌ WRONG — do not do this):
 
-🚫 WRONG FORMAT (DO NOT USE):
-**Action:** query_10k_report
-**Action Input:** search query
-**Final Answer:** response text
+Action: query_10k_report  
+Action Input: [search input]  
+Final Answer: [an answer here]  
+(This is invalid — Action and Final Answer must not appear together.)
 
-❌ Incorrect Example (Do NOT do this)
-
-Question: Were there any major legal proceedings?
-Thought: I should check the 10-K for legal proceedings.
-Action: query_10k_report
-Action Input: major legal proceedings
-Final Answer: Yes, there was a major proceeding related to antitrust.
-
-🚫 This is WRONG — you cannot output both an Action and Final Answer in the same step.
+---
 
 Begin!
 
-Previous conversation:
-
+Previous steps:  
 {agent_scratchpad}
 
-Current question:
-
-{input}
-
-Thought:"""
+Question: {input}  
+Thought:
+"""
 
     prompt = PromptTemplate(
         input_variables=["input", "agent_scratchpad", "tool_names", "tools"],
