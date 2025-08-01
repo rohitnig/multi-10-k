@@ -14,14 +14,17 @@ services:
       - ./tests:/app/tests
     environment:
       - CHROMA_HOST=chromadb
-      - GEMINI_API_KEY=${GEMINI_API_KEY} # Use environment variable from host
+      - TAVILY_API_KEY=${TAVILY_API_KEY} # Use environment variable from host
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY} # OpenAI API for faster LLM responses
       - MOCK_MODE=${MOCK_MODE:-false} # Enable mock mode for testing without Gemini API
+      - ENABLE_10K_RAG=${ENABLE_10K_RAG:-false} # Toggle 10K RAG functionality (disabled by default now)
     depends_on:
       chromadb:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
     restart: on-failure
+    profiles:
+      - api
 
   chromadb:
     image: chromadb/chroma:0.5.3

@@ -4,215 +4,179 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a **Multi-Agent Financial Analyst** system that implements a "Mixture of Experts" (MoE) architecture using LangChain. The system evolves from a simple RAG pipeline into a sophisticated multi-agent system capable of synthesizing information from multiple sources.
+This is a **Multi-Agent Financial Analyst** system that implements a "Mixture of Experts" (MoE) architecture using LangChain. The system has evolved from a simple RAG pipeline into a sophisticated multi-agent system capable of synthesizing information from multiple sources.
 
-### Architecture
+### Current Architecture
 
-The system follows an agentic workflow with these key components:
+The system follows a ReAct agentic workflow with these key components:
 
-- **Orchestrator Agent**: Central coordinator built with FastAPI + LangChain that analyzes user queries and delegates tasks to specialized tools
-- **Tool Belt**: Collection of specialized agents:
-  - 10-K Report Tool (RAG pipeline with ChromaDB)
-  - Web Search Tool (real-time information via Tavily API)
-  - Financial Data Tool (SQL queries against PostgreSQL)
-- **Backend**: Dockerized services running on GCP
-- **Frontend**: SPA (Single Page Application)
-- **LLM**: Ollama with Phi-3:mini model for local inference (Phase 1), with Gemini API integration for tools
+- **Orchestrator Agent**: Central coordinator using OpenAI GPT-4o-mini for reasoning and tool selection
+- **Tool Belt**: Collection of specialized tools:
+  - **10-K Report Tool**: RAG pipeline with ChromaDB + Gemini API synthesis (toggleable)
+  - **Web Search Tool**: Real-time information via Tavily API  
+  - **SQL Database Tool**: Queries against SQLite financial database
+- **Backend**: Dockerized services with profile-based orchestration
+- **LLM Stack**: OpenAI GPT-4o-mini for agent reasoning, Gemini API for 10K synthesis
 
-### Data Flow
+### Tool Selection Logic
 
-1. User submits complex financial query via SPA
-2. Orchestrator Agent analyzes query using Gemini API
-3. Agent decides which tool(s) to use based on query intent
-4. Tools execute in parallel/sequence as needed:
-   - 10-K Tool searches vector database for document insights
-   - Web Search Tool fetches current market information
-   - Financial Data Tool executes SQL queries for structured data
-5. Orchestrator synthesizes responses into final answer
-6. Result streams back to user interface
-
-## Development Phases
-
-The project follows a 4-phase implementation:
-
-1. **Phase 1**: ✅ **COMPLETED** - Refactor existing RAG logic into LangChain Tool interface
-2. **Phase 2**: Build core Orchestrator Agent with single tool integration  
-3. **Phase 3**: Add Web Search and SQL Database tools with multi-tool routing
-4. **Phase 4**: Enhance frontend to display agent thought processes and multi-step reasoning
-
-### Phase 1 Achievements ✅
-- **LangChain Tool Integration**: Successfully converted RAG pipeline into `query_10k_report` tool
-- **Agent Architecture**: Implemented ReAct agent using LangChain with Ollama + Phi-3:mini model
-- **Docker Orchestration**: Fixed and optimized multi-service Docker setup with proper health checks
-- **Vector Database**: ChromaDB integration working with 10-K document ingestion
-- **Model Migration**: Upgraded from Gemma:2b to Phi-3:mini for superior ReAct reasoning and format compliance
-- **Advanced Output Parser**: Implemented parser with markdown stripping, log filtering, and format validation
-- **ReAct Prompt Optimization**: Enhanced prompt with explicit formatting rules and few-shot examples
-- **Parameter Tuning**: Optimized Ollama parameters (temperature=0.1, top_p=0.9) for consistent outputs
-- **Logging Enhancement**: Added timestamps and suppressed tool noise during agent execution
-- **Dependency Management**: Fixed beautifulsoup4 requirement for document ingestion
-- **End-to-End Functionality**: Agent successfully answers queries with real 10-K data in single iteration
-
-## Key Technical Considerations
-
-- **Prompt Engineering**: Orchestrator prompts are critical for correct tool selection and user intent understanding
-- **Tool Failure Handling**: System must gracefully handle API failures, SQL errors, and network issues
-- **Context Management**: Multi-step queries require persistent memory/scratchpad functionality
-- **State Management**: Agent workflows need to track intermediate results across tool calls
-
-## Existing Codebase (old_app/)
-
-The `old_app/` folder contains the original RAG pipeline implementation that will be refactored into the multi-agent system:
-
-### Current Implementation
-- **FastAPI Backend** (`main.py`): RESTful API with `/query` endpoint for 10-K Q&A
-- **Vector Database**: ChromaDB for document embeddings and similarity search  
-- **Document Processing** (`ingest.py`): HTML parsing and text chunking for 10-K filings
-- **Embeddings**: SentenceTransformer (`all-MiniLM-L6-v2`) for semantic search
-- **LLM Integration**: Google Gemini API for answer synthesis
-- **Database Utilities** (`check_db.py`): ChromaDB connection testing and data inspection
-
-### Architecture Components
-- **AppState Class**: Lazy-loaded singleton for models and connections (embedding model, ChromaDB client, Gemini model)
-- **Document Chunking**: RecursiveCharacterTextSplitter (1000 chars, 200 overlap)
-- **Mock Mode**: Environment variable for testing without Gemini API calls
-- **Error Handling**: Rate limiting and graceful API error responses
+The agent uses **dynamic prompt engineering** to decide which tools to use:
+- Prompt examples are generated based on available tools
+- When `ENABLE_10K_RAG=false`, only web search examples are shown
+- Agent learns tool selection from few-shot examples in the prompt template
 
 ## Development Commands
 
-### Multi-Agent System (Current - Phase 1 Complete)
+### Service Orchestration (Profile-Based)
+
+The system uses Docker Compose profiles for clean service separation:
+
 ```bash
-# First-time setup: Pull the Phi-3:mini model (one-time only)
-docker compose --profile setup up
-
-# Start all services (ChromaDB, Ollama, Agent)
-docker compose up -d
-
-# Run with data ingestion (if ChromaDB is empty)
+# Run ingestion only (ChromaDB + ingestion process)
 docker compose --profile ingest up
 
-# View logs for debugging (now with timestamps)
+# Run agent/API only (ChromaDB + API service)  
+docker compose --profile api up -d
+
+# Run everything together
+docker compose up -d
+
+# View agent logs
 docker compose logs -f api
-docker compose logs -f chromadb  
-docker compose logs -f ollama
 
-# Stop all services
-docker compose down
-
-# Run the agent directly (requires services running)
-cd app/
-python main.py
+# Clean restart
+docker compose down && docker compose --profile api up -d
 ```
 
-### Legacy RAG System (old_app/ - for reference)
+### Tool Configuration
+
+Toggle 10K RAG functionality:
 ```bash
-# Navigate to old_app directory first
-cd old_app/
+# Enable 10K RAG tool
+ENABLE_10K_RAG=true docker compose --profile api up -d
 
-# Start legacy FastAPI + ChromaDB system
-docker compose up
-
-# Direct API testing against legacy system
-curl -X POST "http://localhost:8000/query" \
-     -H "Content-Type: application/json" \
-     -d '{"question": "What are the main risks facing Google?", "top_k": 3}'
+# Disable 10K RAG tool (web search only)
+ENABLE_10K_RAG=false docker compose --profile api up -d
 ```
 
 ### Testing
+
 ```bash
 # Run all tests
 pytest
 
-# Run specific test file
-pytest tests/test_file_tools.py
+# Test specific tool
+pytest tests/test_file_tools.py -v
 
-# Run tests with verbose output
-pytest -v
+# Run tests with coverage
+pytest --cov=app tests/
 ```
 
-### Environment Variables
-- `GEMINI_API_KEY`: Required for tool LLM synthesis (used by query_10k_report tool)
-- `CHROMA_HOST`: ChromaDB host (default: chromadb for Docker, localhost for local)
-- `MOCK_MODE`: Enable testing without Gemini API (default: false)
+### Data Management
 
-## Troubleshooting
-
-### Common Docker Issues
-
-**Model Not Found Error**
-```
-OllamaEndpointNotFoundError: Maybe your model is not found and you should pull the model with `ollama pull phi3:mini`
-```
-Solution: Run the setup profile once to download the model:
 ```bash
-docker compose --profile setup up
-```
-Or pull directly if the setup service has networking issues:
-```bash
-docker exec rag_ollama ollama pull phi3:mini
-```
-
-**Ollama Health Check Failing**
-If Ollama container is marked as unhealthy, check if the health check command works:
-```bash
-docker exec rag_ollama ollama list
-```
-
-**ChromaDB Connection Issues**
-Ensure ChromaDB is healthy before starting other services:
-```bash
-docker compose up chromadb
-# Wait for healthy status, then start other services
-docker compose up -d
-```
-
-**Missing beautifulsoup4 Dependency**
-If ingestion fails with `ModuleNotFoundError: No module named 'bs4'`:
-```bash
-# Rebuild the ingestion container after updating requirements.txt
-docker compose build ingestion_runner
+# Ingest 10K data (required for RAG tool)
 docker compose --profile ingest up
-```
 
-**Container Build Issues**
-Force rebuild containers if Dockerfile changes aren't being picked up:
-```bash
-docker compose build --no-cache
-docker compose up -d
-```
-
-**ReAct Parsing Errors**
-If agent gets stuck in parsing loops or format errors, the enhanced output parser should handle this automatically by:
-- Stripping markdown formatting
-- Filtering interfering log messages
-- Validating ReAct format structure
-
-Check logs for parsing details:
-```bash
-docker compose logs -f api
-```
-
-**Log Interference Issues**
-If you see "Invalid Format" errors, ensure tool logging isn't interfering with agent responses. The system now suppresses tool logs during execution and filters them in the parser.
-
-### Data Ingestion Issues
-If the agent can't find relevant documents, ensure the 10-K data is properly ingested:
-```bash
-# Check if ChromaDB has data
+# Check ChromaDB data
 cd old_app/
 python check_db.py
 
-# Re-run ingestion if needed  
-docker compose --profile ingest up
+# Check database contents
+docker compose logs chromadb
 ```
 
-## Project Status - Phase 1 Complete
+## Architecture Deep Dive
 
-✅ **COMPLETED**: Multi-agent financial analyst system with LangChain integration
-- **Architecture**: ReAct agent with specialized 10-K report tool
-- **LLM Integration**: Ollama + Phi-3:mini for agent reasoning, Gemini for tool synthesis  
-- **Vector Database**: ChromaDB with Google 2023 10-K filing
-- **Containerization**: Full Docker orchestration with health checks
-- **Testing**: Pytest suite with mocked dependencies
+### Agent Flow
+1. **Query Analysis**: OpenAI GPT-4o-mini analyzes user query using ReAct pattern
+2. **Tool Selection**: Dynamic prompt guides tool choice based on available tools
+3. **Tool Execution**: Selected tools execute (web search, 10K RAG, SQL queries)
+4. **Response Synthesis**: Agent combines tool outputs into final answer
 
-**Ready for Phase 2**: Expand to multi-tool agent with web search and SQL database integration.
+### Tool Architecture
+
+**10K Report Tool** (`app/tools/file_tools.py`):
+- ChromaDB vector search with SentenceTransformer embeddings
+- Gemini API for document synthesis
+- Lazy-loaded resources with ToolState singleton pattern
+- Configurable via `ENABLE_10K_RAG` environment variable
+
+**Web Search Tool** (`app/tools/web_tools.py`):
+- Tavily API integration for real-time information
+- Always available (cannot be disabled)
+
+**SQL Database Tool** (`app/tools/sql_tools.py`):  
+- SQLite database queries using LangChain SQL utilities
+- Natural language to SQL translation
+- Financial data queries (revenue, profit, etc.)
+
+### Prompt Engineering
+
+The system uses **dynamic prompt templating** in `main.py`:
+- Examples are conditionally included based on enabled tools
+- Prevents agent confusion when tools are unavailable
+- ReAct format with strict formatting rules
+
+### Error Handling
+
+- **Parsing Errors**: `MarkdownStripReActOutputParser` cleans LLM output
+- **Iteration Limits**: `max_iterations=6` prevents infinite loops
+- **Tool Failures**: `handle_parsing_errors=True` for graceful recovery
+- **Service Dependencies**: Docker health checks ensure proper startup order
+
+## Environment Variables
+
+**Required:**
+- `OPENAI_API_KEY`: Main agent reasoning (GPT-4o-mini)
+- `TAVILY_API_KEY`: Web search functionality
+
+**Conditional:**
+- `GEMINI_API_KEY`: Required only when `ENABLE_10K_RAG=true`
+
+**Optional:**
+- `ENABLE_10K_RAG`: Toggle 10K RAG tool (default: false)
+- `CHROMA_HOST`: ChromaDB host (default: chromadb for Docker)
+- `MOCK_MODE`: Testing without API calls (default: false)
+
+## Key Files and Locations
+
+**Main Agent Logic:**
+- `app/main.py`: ReAct agent implementation and orchestration
+- `app/tools/`: Tool implementations (file_tools.py, web_tools.py, sql_tools.py)
+
+**Data and Configuration:**
+- `app/goog-20231231.htm`: Google 2023 10-K filing for ingestion
+- `app/ingest.py`: ChromaDB data ingestion script
+- `docker-compose.yml`: Service orchestration with profiles
+
+**Legacy Reference:**
+- `old_app/`: Original RAG implementation (FastAPI-based)
+
+## Troubleshooting
+
+### Agent Performance
+- **Slow responses**: Ensure using OpenAI API (not Ollama)
+- **Iteration timeouts**: Check `max_iterations` setting in main.py
+- **Tool selection errors**: Verify dynamic prompt generation
+
+### Service Issues
+- **Profile conflicts**: Use specific profiles (`--profile api` or `--profile ingest`)
+- **Network errors**: Run `docker compose down` and restart services
+- **ChromaDB connection**: Ensure ChromaDB is healthy before starting agent
+
+### Tool-Specific Issues
+- **10K RAG not working**: Verify `ENABLE_10K_RAG=true` and `GEMINI_API_KEY` set
+- **Web search failing**: Check `TAVILY_API_KEY` environment variable
+- **SQL queries failing**: Ensure `financials.db` exists and is accessible
+
+## Current Status
+
+**✅ Phase 2+ Complete**: Multi-tool agent with intelligent routing
+- **Tool Integration**: Web search, 10K RAG, SQL database tools
+- **OpenAI Migration**: Upgraded from local Ollama to OpenAI API for speed
+- **Profile-Based Services**: Clean separation of ingestion vs. runtime
+- **Dynamic Prompting**: Tool examples adapt to available functionality
+- **Toggle Architecture**: 10K RAG can be disabled for faster web-only queries
+
+**Key Achievement**: The system demonstrates that web search can often replace RAG for publicly available documents, providing faster responses with current information.
