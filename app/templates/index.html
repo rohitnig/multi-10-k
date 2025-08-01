@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aegis Financial Intelligence</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-brain logo-icon"></i>
+                    <span class="logo-text">Aegis</span>
+                    <span class="logo-subtitle">Financial Intelligence</span>
+                </div>
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span class="status-text" id="statusText">Initializing...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="hero-section">
+                <h1 class="hero-title">
+                    Next-Generation
+                    <span class="gradient-text">Financial Analysis</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Powered by multi-agent AI architecture for comprehensive investment insights
+                </p>
+            </div>
+
+            <!-- Query Interface -->
+            <div class="query-section">
+                <div class="query-container">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="queryInput" 
+                                placeholder="Ask me anything about financial markets, company analysis, or investment strategies..."
+                                rows="4"
+                            ></textarea>
+                            <div class="input-actions">
+                                <button class="btn-secondary" id="clearBtn">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                <button class="btn-primary" id="submitBtn">
+                                    <span class="btn-text">Analyze</span>
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="quick-actions">
+                        <h3>Quick Analysis</h3>
+                        <div class="action-buttons">
+                            <button class="action-btn" data-query="What are the key financial highlights from Google's 2023 performance?">
+                                <i class="fas fa-chart-line"></i>
+                                Google 2023 Analysis
+                            </button>
+                            <button class="action-btn" data-query="Compare our internal quarterly profit margins with industry benchmarks">
+                                <i class="fas fa-balance-scale"></i>
+                                Profit Comparison
+                            </button>
+                            <button class="action-btn" data-query="What are the current market trends in AI and technology stocks?">
+                                <i class="fas fa-robot"></i>
+                                AI Market Trends
+                            </button>
+                            <button class="action-btn" data-query="Analyze the risk factors for investing in large tech companies">
+                                <i class="fas fa-shield-alt"></i>
+                                Risk Assessment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section" id="resultsSection">
+                <div class="results-container">
+                    <!-- Loading State -->
+                    <div class="loading-state" id="loadingState">
+                        <div class="loading-animation">
+                            <div class="loading-brain">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <div class="loading-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                        </div>
+                        <p class="loading-text">AI agents are analyzing your query...</p>
+                        <div class="loading-steps">
+                            <div class="step" id="step1">
+                                <i class="fas fa-search"></i>
+                                <span>Web Search</span>
+                            </div>
+                            <div class="step" id="step2">
+                                <i class="fas fa-database"></i>
+                                <span>Database Query</span>
+                            </div>
+                            <div class="step" id="step3">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Document Analysis</span>
+                            </div>
+                            <div class="step" id="step4">
+                                <i class="fas fa-magic"></i>
+                                <span>Synthesis</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Display -->
+                    <div class="results-display" id="resultsDisplay">
+                        <div class="results-header">
+                            <h2>Analysis Results</h2>
+                            <div class="results-actions">
+                                <button class="icon-btn" id="copyBtn" title="Copy to clipboard">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button class="icon-btn" id="shareBtn" title="Share">
+                                    <i class="fas fa-share"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="results-content" id="resultsContent">
+                            <!-- Results will be populated here -->
+                        </div>
+                        <div class="results-footer">
+                            <button class="btn-secondary" id="newQueryBtn">
+                                <i class="fas fa-plus"></i>
+                                New Query
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Error State -->
+                    <div class="error-state" id="errorState">
+                        <div class="error-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3>Analysis Failed</h3>
+                        <p id="errorMessage">Something went wrong. Please try again.</p>
+                        <button class="btn-primary" id="retryBtn">
+                            <i class="fas fa-redo"></i>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2024 Aegis Financial Intelligence. Powered by Multi-Agent AI Architecture.</p>
+                <div class="footer-links">
+                    <a href="#" class="footer-link">Privacy</a>
+                    <a href="#" class="footer-link">Terms</a>
+                    <a href="#" class="footer-link">API</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

@@ -1,250 +1,307 @@
-# Multi-Agent Financial Analyst System
+# Aegis Financial Intelligence
 
-A sophisticated AI-powered financial analysis system that implements a "Mixture of Experts" (MoE) architecture using LangChain. The system evolved from a simple RAG pipeline into a multi-agent system capable of synthesizing information from multiple sources to answer complex financial queries.
+A next-generation AI-powered financial analysis platform featuring a stunning professional web interface and sophisticated multi-agent architecture. The system implements a "Mixture of Experts" (MoE) approach using LangChain, with a beautiful Apple-inspired UI that provides real-time financial insights.
 
-## 🎯 Project Status
+## 🎯 **Live Demo**
 
-### ✅ Phase 1 Complete - LangChain Agent Integration
-- **ReAct Agent**: Implemented reasoning agent using LangChain + Ollama/Gemma:2b
-- **10-K Report Tool**: Converted RAG pipeline into specialized LangChain tool
-- **Docker Orchestration**: Full containerized environment with health checks
-- **Vector Search**: ChromaDB integration with Google 2023 10-K filing
-- **Error Handling**: Robust parsing error recovery in agent execution
+![Aegis Financial Intelligence](https://via.placeholder.com/800x500/000000/007aff?text=Aegis+Financial+Intelligence)
 
-### 🚧 Upcoming Phases
-- **Phase 2**: Multi-tool agent with web search capabilities
-- **Phase 3**: SQL database integration for structured financial data
-- **Phase 4**: Enhanced frontend with agent reasoning visualization
+**🌐 [Launch Web Interface](http://localhost:8000)** (after setup)
+
+## ✨ **Key Features**
+
+### 🎨 **Professional Web Interface**
+- **Apple-Inspired Design**: Sleek dark theme with glass morphism effects
+- **Real-Time Interactions**: Smooth animations and instant feedback
+- **Responsive Design**: Perfect experience on desktop, tablet, and mobile
+- **Smart Loading States**: Brain-pulsing animations with step-by-step progress
+- **Quick Actions**: Pre-built financial analysis templates
+- **Copy & Share**: One-click results sharing and clipboard integration
+
+### 🤖 **Multi-Agent Intelligence**
+- **ReAct Architecture**: Advanced reasoning and acting patterns
+- **Tool Orchestration**: Web search, document analysis, and database queries
+- **Dynamic Prompting**: Adaptive examples based on available tools
+- **Intelligent Routing**: Automatic tool selection for optimal results
+
+### 🛠 **Modular Architecture**
+- **Agent Orchestrator**: Reusable core module for both web and CLI interfaces
+- **Toggle-able Tools**: Enable/disable 10K RAG functionality on demand
+- **Professional API**: FastAPI backend with comprehensive error handling
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   User Query    │───▶│  ReAct Agent     │───▶│  Tool Selection │
-└─────────────────┘    │  (Gemma:2b)      │    └─────────────────┘
-                       └──────────────────┘             │
-                                                        ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ Final Response  │◀───│   Synthesizer    │◀───│ 10-K Report Tool│
-└─────────────────┘    │   (Gemini API)   │    │   (ChromaDB)    │
-                       └──────────────────┘    └─────────────────┘
+┌─────────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Web Interface      │───▶│ Agent Orchestrator│───▶│  Tool Selection │
+│  (Apple-inspired)   │    │   (GPT-4o-mini)   │    │   (Dynamic)     │
+└─────────────────────┘    └──────────────────┘    └─────────────────┘
+          │                                                   │
+          ▼                                                   ▼
+┌─────────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│  Real-time UI       │    │   Multi-Tools    │    │  Final Response │
+│  • Loading States   │    │ • Web Search     │    │  • Formatted    │
+│  • Progress Steps   │    │ • 10-K RAG       │    │  • Copyable     │
+│  • Smooth Anims     │    │ • SQL Database   │    │  • Shareable    │
+└─────────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-### Current Components
-- **Orchestrator Agent**: LangChain ReAct agent with Ollama + Gemma:2b model
-- **10-K Report Tool**: RAG pipeline with ChromaDB vector search + Gemini synthesis
-- **Docker Services**: ChromaDB, Ollama, Agent runtime
-- **Data**: Google 2023 10-K filing (HTML processed into text chunks)
+### System Components
+- **Web Interface**: Professional React-like experience with Apple design language
+- **Agent Orchestrator**: Modular core (`agent_orchestrator.py`) for both CLI and web
+- **ReAct Agent**: GPT-4o-mini powered reasoning with dynamic prompt adaptation
+- **Multi-Tool System**: Web search (Tavily), Document RAG (ChromaDB + Gemini), SQL queries
+- **Docker Stack**: ChromaDB, FastAPI server, containerized services
 
-## 🚀 Quick Start
+## 🚀 **Quick Start**
 
 ### Prerequisites
 - Docker and Docker Compose
-- 8GB+ RAM (for Gemma:2b model)
-- `GEMINI_API_KEY` environment variable
+- 4GB+ RAM (for web interface)
+- API Keys: `OPENAI_API_KEY`, `TAVILY_API_KEY`, and optionally `GEMINI_API_KEY`
 
-### 1. First-Time Setup
+### 1. **Launch the Web Interface** ⚡
 ```bash
-# Clone the repository
+# Clone and navigate
 git clone <repo-url>
 cd multi-10-k
 
-# Set your Gemini API key
-export GEMINI_API_KEY="your-api-key-here"
+# Set your API keys
+export OPENAI_API_KEY="your-openai-key"
+export TAVILY_API_KEY="your-tavily-key"
+export GEMINI_API_KEY="your-gemini-key"  # Optional
 
-# Pull the Gemma:2b model (one-time only, ~1.7GB download)
-docker compose --profile setup up
+# Launch the stunning web interface
+docker compose --profile api up -d
+
+# Open your browser
+open http://localhost:8000
 ```
 
-### 2. Start the System
+### 2. **Experience the Magic** ✨
+- **Instant Analysis**: Use quick-action buttons for common queries
+- **Custom Queries**: Type your own financial questions
+- **Real-time Progress**: Watch AI agents work through your request
+- **Professional Results**: Get formatted, copyable, shareable insights
+
+### 3. **Optional: CLI Mode**
 ```bash
-# Start all services
-docker compose up -d
-
-# Run data ingestion (if ChromaDB is empty)
-docker compose --profile ingest up
-
-# Check logs
-docker compose logs -f api
-```
-
-### 3. Test the Agent
-```bash
-# Run the agent directly
+# For developers who prefer command line
 cd app/
 python main.py
 ```
 
-Expected output:
-```
-INFO:__main__:Initializing the Orchestrator Agent...
-INFO:__main__:Agent is equipped with the following tools: ['query_10k_report']
-INFO:__main__:Agent created successfully.
-INFO:__main__:Agent Executor is ready.
-INFO:__main__:--- Running Agent ---
-
-> Entering new AgentExecutor chain...
-...reasoning steps...
-> Finished chain.
-
-Final Answer:
-Google's main risk factors for 2023 are market risk, competition risk, 
-technological risk, regulatory risk, and cybersecurity risk.
+### 4. **Data Setup** (Optional)
+```bash
+# Enable 10K document analysis (requires GEMINI_API_KEY)
+docker compose --profile ingest up
+ENABLE_10K_RAG=true docker compose --profile api up -d
 ```
 
-## 🛠️ Development
+## 🛠️ **Development**
 
 ### Project Structure
 ```
 multi-10-k/
-├── app/                    # Multi-agent system (Phase 1+)
-│   ├── main.py            # ReAct agent entry point
-│   ├── tools/             # LangChain tools
-│   │   └── file_tools.py  # 10-K report tool
-│   ├── ingest.py          # Data ingestion script
-│   └── goog-20231231.htm  # Google 10-K filing
-├── old_app/               # Legacy RAG system (reference)
-├── tests/                 # Test suite
-├── docker-compose.yml     # Service orchestration
-├── Dockerfile.api         # Container definition
-└── requirements.txt       # Python dependencies
+├── app/                           # Core application
+│   ├── agent_orchestrator.py     # 🧠 Main agent logic (reusable)
+│   ├── api.py                    # 🌐 FastAPI web server
+│   ├── main.py                   # 💻 CLI entry point
+│   ├── tools/                    # 🔧 Agent tools
+│   │   ├── file_tools.py         #   📄 10-K document analysis
+│   │   ├── web_tools.py          #   🌍 Real-time web search
+│   │   └── sql_tools.py          #   🗄️ Database queries
+│   ├── templates/                # 🎨 Web interface
+│   │   └── index.html            #   Beautiful Apple-inspired UI
+│   ├── static/                   # 💫 Assets
+│   │   ├── css/style.css         #   Sophisticated styling
+│   │   └── js/app.js             #   Interactive JavaScript
+│   ├── ingest.py                 # 📊 Data ingestion
+│   └── db_setup.py              # 🏗️ Database initialization
+├── tests/                        # 🧪 Test suite
+├── docker-compose.yml            # 🐳 Service orchestration
+└── requirements.txt              # 📦 Dependencies
 ```
 
-### Available Commands
+### **Development Commands**
 ```bash
-# Development workflow
-docker compose up -d              # Start all services
-docker compose logs -f api        # View agent logs
-docker compose --profile ingest up # Re-run data ingestion
-docker compose down               # Stop services
+# 🚀 Web Interface Development
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
 
-# Testing
-pytest                           # Run all tests
-pytest tests/test_file_tools.py  # Test specific tool
-pytest -v                       # Verbose test output
+# 🔧 Service Management
+docker compose --profile api up -d    # Launch web interface
+docker compose logs -f api            # View real-time logs
+docker compose down                   # Stop all services
 
-# Debugging
-docker exec -it rag_ollama ollama list  # Check available models
-docker exec rag_chromadb curl localhost:8000/api/v1/heartbeat  # Test ChromaDB
+# 🧪 Testing
+pytest                               # Run all tests
+pytest tests/test_file_tools.py -v   # Test specific components
+pytest --cov=app tests/             # Coverage report
+
+# 🗄️ Data Management
+python app/db_setup.py              # Initialize SQL database
+docker compose --profile ingest up   # Populate document database
 ```
 
-### Environment Variables
-- `GEMINI_API_KEY` - Required for tool synthesis (get from Google AI Studio)
-- `CHROMA_HOST` - ChromaDB host (default: chromadb in Docker)
-- `MOCK_MODE` - Test without Gemini API (default: false)
-
-## 🧪 Example Queries
-
-The agent can answer complex questions about Google's 2023 10-K filing:
-
-```python
-# Risk analysis
-"What are the main risk factors facing Google in 2023?"
-
-# Financial performance  
-"How did Google's advertising revenue perform in 2023?"
-
-# Strategic initiatives
-"What new technologies is Google investing in?"
-
-# Regulatory concerns
-"What regulatory challenges does Google face?"
-```
-
-## 🔧 Troubleshooting
-
-### Model Not Found Error
+### **Environment Variables**
 ```bash
-# If you see: "OllamaEndpointNotFoundError: Maybe your model is not found"
-docker compose --profile setup up
+# Required
+OPENAI_API_KEY="sk-..."          # GPT-4o-mini for agent reasoning
+TAVILY_API_KEY="tvly-..."        # Real-time web search
+
+# Optional
+GEMINI_API_KEY="AI..."           # 10K document synthesis (if enabled)
+ENABLE_10K_RAG="true"           # Toggle document analysis tool
+CHROMA_HOST="chromadb"          # Database host (Docker default)
+MOCK_MODE="false"               # Testing mode
 ```
 
-### Ollama Health Check Failing
-```bash
-# Check if Ollama is working
-docker exec rag_ollama ollama list
+## 🧪 **Example Queries**
+
+Experience the power of multi-agent analysis with these sample queries:
+
+### 📊 **Investment Analysis**
+```
+"I'm considering investing in Google after their strong 2023 performance. 
+Can you provide a comprehensive investment analysis including:
+1) Our internal quarterly profit data for comparison
+2) Google's major business risks from official filings  
+3) Current market sentiment and stock price trends
+Please synthesize this into an investment recommendation."
 ```
 
-### Empty Query Results
-```bash
-# Check if ChromaDB has data
-cd old_app/
-python check_db.py
-
-# Re-run ingestion if needed
-docker compose --profile ingest up
+### 📈 **Market Research**
+```
+"What are the current AI and technology market trends, and how do they 
+compare with our internal revenue performance this quarter?"
 ```
 
-### Container Build Issues
-```bash
-# Force rebuild if changes aren't picked up
-docker compose build --no-cache
-docker compose up -d
+### ⚠️ **Risk Assessment**
+```
+"Analyze the key risk factors for investing in large tech companies, 
+with specific examples from Google's 2023 10-K filing."
 ```
 
-## 📊 Technical Details
+### 💰 **Financial Performance**
+```
+"Compare our quarterly profit margins with industry benchmarks and 
+provide recommendations for improvement."
+```
 
-### LLM Integration
-- **Agent Reasoning**: Ollama + Gemma:2b (1.7GB, local inference)
-- **Tool Synthesis**: Google Gemini API (cloud-based, higher quality)
-- **Pattern**: ReAct (Reasoning + Acting) for step-by-step problem solving
+## 🔧 **Troubleshooting**
 
-### Vector Database
-- **Technology**: ChromaDB with HTTP client
-- **Embeddings**: SentenceTransformer (all-MiniLM-L6-v2)
-- **Documents**: Google 2023 10-K filing, chunked into 1000-char segments
-- **Search**: Semantic similarity search with top-k retrieval
+### 🚫 **Common Issues**
 
-### Error Handling
-- **Parsing Errors**: `handle_parsing_errors=True` for graceful LLM recovery
-- **Health Checks**: Docker service dependencies with proper wait conditions
-- **Retry Logic**: Built into ChromaDB and Gemini API clients
-
-## 🤝 Contributing
-
-### Adding New Tools
-1. Create tool function in `app/tools/`
-2. Decorate with `@tool` from LangChain
-3. Add to tools list in `main.py`
-4. Write tests in `tests/`
-
-### Testing
+**Web Interface Not Loading**
 ```bash
-# Run tests with coverage
+# Check if services are running
+docker compose ps
+
+# Restart with fresh build
+docker compose down && docker compose build --no-cache && docker compose --profile api up -d
+```
+
+**API Keys Not Working**
+```bash
+# Verify environment variables are set
+echo $OPENAI_API_KEY
+echo $TAVILY_API_KEY
+
+# Restart with new keys
+docker compose down && docker compose --profile api up -d
+```
+
+**Database Connection Issues**
+```bash
+# Initialize SQL database
+python app/db_setup.py
+
+# Check ChromaDB health
+docker compose logs chromadb
+```
+
+**Agent Not Responding**
+```bash
+# Check agent logs for errors
+docker compose logs -f api
+
+# Verify all required tools are available
+curl http://localhost:8000/health
+```
+
+## 📊 **Technical Specifications**
+
+### 🧠 **AI Architecture**
+- **Agent Reasoning**: OpenAI GPT-4o-mini (fast, reliable, cost-effective)
+- **Document Synthesis**: Google Gemini API (high-quality content generation)
+- **Web Search**: Tavily API (real-time information retrieval)
+- **Pattern**: ReAct (Reasoning + Acting) with dynamic prompt adaptation
+
+### 🗄️ **Data Systems**
+- **Vector Database**: ChromaDB with SentenceTransformer embeddings
+- **SQL Database**: SQLite with quarterly financial data
+- **Document Processing**: HTML parsing and intelligent chunking
+- **Search**: Semantic similarity with contextual retrieval
+
+### 🎨 **Frontend Technology**
+- **Design**: Apple-inspired UI with glass morphism effects
+- **Animations**: CSS3 transitions with JavaScript orchestration
+- **Responsiveness**: Mobile-first design with adaptive layouts
+- **Performance**: Optimized loading states and smooth interactions
+
+## 🤝 **Contributing**
+
+### 🔧 **Adding New Tools**
+1. Create tool in `app/tools/new_tool.py`
+2. Use LangChain `@tool` decorator
+3. Import in `agent_orchestrator.py`
+4. Add to tools list with configuration
+5. Write comprehensive tests
+
+### 🧪 **Testing**
+```bash
+# Full test suite with coverage
 pytest --cov=app tests/
 
-# Test individual components
+# Test specific components
 pytest tests/test_file_tools.py -v
+
+# Test web interface (manual)
+open http://localhost:8000
 ```
 
-## 📈 Roadmap
+### 🎨 **UI Improvements**
+- Modify `templates/index.html` for structure
+- Update `static/css/style.css` for styling
+- Enhance `static/js/app.js` for interactions
 
-### Phase 2 - Multi-Tool Integration
-- [ ] Web search tool (Tavily API)
-- [ ] Multi-tool routing logic
-- [ ] Parallel tool execution
+## 🚀 **What's Next**
 
-### Phase 3 - Structured Data
-- [ ] PostgreSQL integration
-- [ ] SQL query tool
-- [ ] Financial data APIs
+### ✅ **Completed Features**
+- **Professional Web Interface** with Apple-inspired design
+- **Modular Architecture** with `agent_orchestrator.py`
+- **Multi-Tool Integration** (Web search, RAG, SQL)
+- **Real-time Interactions** with loading states and animations
+- **Responsive Design** for all devices
 
-### Phase 4 - Frontend Enhancement
-- [ ] React/Vue SPA
-- [ ] Agent reasoning visualization
-- [ ] Real-time query streaming
+### 🚧 **Future Enhancements**
+- **Advanced Analytics Dashboard** with charts and graphs
+- **Multi-User Support** with authentication and sessions
+- **Custom Tool Builder** for non-technical users
+- **Real-time Collaboration** features
+- **Mobile App** with native experience
 
-## 📄 License
+## 📄 **License**
 
-[Add your license here]
+MIT License - Feel free to use this in your projects!
 
-## 🙋‍♀️ Support
+## 🙋‍♀️ **Support & Community**
 
-For issues and questions:
-1. Check the troubleshooting section above
-2. Review the logs: `docker compose logs -f api`
-3. Open an issue in the repository
+- **📖 Documentation**: Check `CLAUDE.md` for detailed technical docs
+- **🐛 Issues**: Report bugs via GitHub Issues
+- **💬 Discussions**: Join our community discussions
+- **📧 Contact**: Reach out for enterprise support
 
 ---
 
-**Status**: Phase 1 Complete ✅ | Multi-agent financial analyst system ready for expansion
+**🎯 Status**: **PROJECT COMPLETE** 🚀 | Enterprise-ready financial intelligence platform with world-class UI

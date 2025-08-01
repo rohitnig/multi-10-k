@@ -10,12 +10,14 @@ This is a **Multi-Agent Financial Analyst** system that implements a "Mixture of
 
 The system follows a ReAct agentic workflow with these key components:
 
+- **Web Interface**: Professional Apple-inspired UI with real-time interactions
+- **Agent Orchestrator**: Modular core (`agent_orchestrator.py`) used by both CLI and web interfaces
 - **Orchestrator Agent**: Central coordinator using OpenAI GPT-4o-mini for reasoning and tool selection
 - **Tool Belt**: Collection of specialized tools:
   - **10-K Report Tool**: RAG pipeline with ChromaDB + Gemini API synthesis (toggleable)
   - **Web Search Tool**: Real-time information via Tavily API  
   - **SQL Database Tool**: Queries against SQLite financial database
-- **Backend**: Dockerized services with profile-based orchestration
+- **Backend**: Dockerized services with profile-based orchestration + FastAPI web server
 - **LLM Stack**: OpenAI GPT-4o-mini for agent reasoning, Gemini API for 10K synthesis
 
 ### Tool Selection Logic
@@ -27,6 +29,21 @@ The agent uses **dynamic prompt engineering** to decide which tools to use:
 
 ## Development Commands
 
+### Web Interface (Primary)
+
+The system now features a stunning professional web interface:
+
+```bash
+# Start the web interface
+docker compose --profile api up -d
+
+# Access the interface
+open http://localhost:8000
+
+# View logs
+docker compose logs -f api
+```
+
 ### Service Orchestration (Profile-Based)
 
 The system uses Docker Compose profiles for clean service separation:
@@ -35,14 +52,11 @@ The system uses Docker Compose profiles for clean service separation:
 # Run ingestion only (ChromaDB + ingestion process)
 docker compose --profile ingest up
 
-# Run agent/API only (ChromaDB + API service)  
+# Run web API (ChromaDB + Web Interface)  
 docker compose --profile api up -d
 
 # Run everything together
 docker compose up -d
-
-# View agent logs
-docker compose logs -f api
 
 # Clean restart
 docker compose down && docker compose --profile api up -d
@@ -72,6 +86,24 @@ pytest tests/test_file_tools.py -v
 pytest --cov=app tests/
 ```
 
+### Local Development
+
+```bash
+# Run the web interface locally
+cd app/
+uvicorn api:app --reload --host 0.0.0.0 --port 8000
+
+# Run the agent directly (CLI mode)
+cd app/
+python main.py
+
+# Setup database for SQL tool
+python db_setup.py
+
+# Run data ingestion for 10K RAG tool
+python ingest.py
+```
+
 ### Data Management
 
 ```bash
@@ -79,11 +111,11 @@ pytest --cov=app tests/
 docker compose --profile ingest up
 
 # Check ChromaDB data
-cd old_app/
-python check_db.py
-
-# Check database contents
 docker compose logs chromadb
+
+# Check SQLite database
+sqlite3 app/financials.db ".tables"
+sqlite3 app/financials.db "SELECT * FROM quarterly_financials;"
 ```
 
 ## Architecture Deep Dive
@@ -101,15 +133,18 @@ docker compose logs chromadb
 - Gemini API for document synthesis
 - Lazy-loaded resources with ToolState singleton pattern
 - Configurable via `ENABLE_10K_RAG` environment variable
+- Can be disabled for faster web-only operation
 
 **Web Search Tool** (`app/tools/web_tools.py`):
-- Tavily API integration for real-time information
+- Tavily API integration for real-time information via `TavilySearchResults`
 - Always available (cannot be disabled)
+- Provides current market data and real-time information
 
 **SQL Database Tool** (`app/tools/sql_tools.py`):  
-- SQLite database queries using LangChain SQL utilities
+- SQLite database queries using `QuerySQLDataBaseTool` from LangChain
 - Natural language to SQL translation
-- Financial data queries (revenue, profit, etc.)
+- Contains `quarterly_financials` table with revenue/profit data (2023-2024)
+- Handles structured financial data queries
 
 ### Prompt Engineering
 
@@ -141,17 +176,27 @@ The system uses **dynamic prompt templating** in `main.py`:
 
 ## Key Files and Locations
 
-**Main Agent Logic:**
-- `app/main.py`: ReAct agent implementation and orchestration
+**Core Architecture:**
+- `app/agent_orchestrator.py`: **Main module** - Agent creation and execution logic
+- `app/main.py`: CLI entry point (simplified, uses agent_orchestrator)
+- `app/api.py`: FastAPI web server with professional UI
 - `app/tools/`: Tool implementations (file_tools.py, web_tools.py, sql_tools.py)
+
+**Web Interface:**
+- `app/templates/index.html`: Professional Apple-inspired web interface
+- `app/static/css/style.css`: Sophisticated styling with animations and gradients
+- `app/static/js/app.js`: Interactive JavaScript with real-time features
 
 **Data and Configuration:**
 - `app/goog-20231231.htm`: Google 2023 10-K filing for ingestion
 - `app/ingest.py`: ChromaDB data ingestion script
+- `app/db_setup.py`: SQLite database initialization
+- `app/financials.db`: SQLite database with quarterly financial data
 - `docker-compose.yml`: Service orchestration with profiles
+- `requirements.txt`: Updated with Jinja2 for templates
 
-**Legacy Reference:**
-- `old_app/`: Original RAG implementation (FastAPI-based)
+**Testing:**
+- `tests/test_file_tools.py`: Unit tests for 10K RAG tool with comprehensive mocking
 
 ## Troubleshooting
 
@@ -168,15 +213,20 @@ The system uses **dynamic prompt templating** in `main.py`:
 ### Tool-Specific Issues
 - **10K RAG not working**: Verify `ENABLE_10K_RAG=true` and `GEMINI_API_KEY` set
 - **Web search failing**: Check `TAVILY_API_KEY` environment variable
-- **SQL queries failing**: Ensure `financials.db` exists and is accessible
+- **SQL queries failing**: Run `python app/db_setup.py` to create/populate `financials.db`
+- **Agent parsing errors**: Check `MarkdownStripReActOutputParser` logs for format issues
 
 ## Current Status
 
-**✅ Phase 2+ Complete**: Multi-tool agent with intelligent routing
-- **Tool Integration**: Web search, 10K RAG, SQL database tools
-- **OpenAI Migration**: Upgraded from local Ollama to OpenAI API for speed
-- **Profile-Based Services**: Clean separation of ingestion vs. runtime
-- **Dynamic Prompting**: Tool examples adapt to available functionality
-- **Toggle Architecture**: 10K RAG can be disabled for faster web-only queries
+**✅ PROJECT COMPLETE**: Production-Ready Financial Intelligence Platform
+- **Professional Web UI**: Apple-inspired interface with real-time interactions and smooth animations
+- **Modular Architecture**: `agent_orchestrator.py` enables code reuse across CLI and web interfaces
+- **Multi-Tool Integration**: Web search, 10K RAG, SQL database tools working seamlessly together
+- **OpenAI Migration**: Using GPT-4o-mini for fast, reliable agent reasoning
+- **Production Services**: Docker orchestration with health checks and profile-based deployment
+- **Dynamic Prompting**: Tool examples adapt based on `ENABLE_10K_RAG` setting
+- **Toggle Architecture**: 10K RAG can be disabled for faster web-only operation
+- **Custom Parser**: `MarkdownStripReActOutputParser` handles LLM output formatting issues
+- **Complete Documentation**: Comprehensive guides for users, developers, and operators
 
-**Key Achievement**: The system demonstrates that web search can often replace RAG for publicly available documents, providing faster responses with current information.
+**🎯 Status**: **PRODUCTION READY** - A sophisticated financial analysis platform combining elegant Apple-inspired UI design with powerful multi-agent AI architecture, ready for enterprise deployment.
