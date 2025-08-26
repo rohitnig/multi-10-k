@@ -1,0 +1,80 @@
+---
+config:
+  layout: elk
+---
+flowchart TB
+ subgraph UI["🌐 User Interface Layer"]
+    direction TB
+        Browser["💻 Modern Web Browser<br>Chrome | Safari | Firefox"]
+        SPA["✨ Single Page Application<br>🎨 Tailwind CSS + Vanilla JS<br>📱 Responsive Design"]
+  end
+ subgraph GCP["☁️ Google Cloud Platform - Docker Orchestration"]
+    direction TB
+        LoadBalancer["⚖️ Load Balancer<br>NGINX Proxy"]
+        API["🚀 FastAPI Backend<br>📊 RESTful API Endpoints<br>🔄 Async Processing"]
+        VectorDB[("🧠 ChromaDB<br>Vector Database<br>📈 Similarity Search<br>🔍 Semantic Indexing")]
+  end
+ subgraph External["🌍 External AI Services"]
+    direction TB
+        EmbedModel["🔤 Sentence Transformers<br>all-MiniLM-L6-v2<br>📊 Local Embeddings"]
+        LLM["🤖 Google Gemini API<br>🧠 Large Language Model<br>💭 Answer Synthesis"]
+  end
+ subgraph Pipeline["📊 Offline Data Processing Pipeline"]
+    direction TB
+        SEC["🏛️ SEC EDGAR Database<br>📋 10-K Annual Reports<br>🏢 Public Companies"]
+        Downloader["⬇️ Document Fetcher<br>🔄 Automated Downloads<br>📅 Periodic Updates"]
+        Parser["📝 Intelligent Parser<br>🔍 Text Extraction<br>🧹 Data Cleaning"]
+        Chunker["✂️ Semantic Chunker<br>📏 Optimal Chunk Sizing<br>🔗 Context Preservation"]
+        Embedder["🎯 Embedding Generator<br>🔢 Vector Creation<br>📊 Similarity Mapping"]
+  end
+ subgraph Monitor["📈 Performance & Analytics"]
+    direction LR
+        Metrics["📊 System Metrics<br>⚡ Response Times<br>🎯 Accuracy Scores"]
+        Logs["📝 Detailed Logging<br>🔍 Error Tracking<br>📋 Audit Trail"]
+        Analytics["📈 Usage Analytics<br>👥 User Patterns<br>📊 Query Insights"]
+  end
+    Browser --> SPA
+    LoadBalancer --> API
+    API <--> VectorDB
+    SEC --> Downloader
+    Downloader --> Parser
+    Parser --> Chunker
+    Chunker --> Embedder
+    Embedder --> VectorDB
+    UserQuery["👤 User Input<br>❓ Financial Question"] -. 🎯 Question Submitted .-> SPA
+    SPA -- 📤 HTTP POST /query<br>🔒 Secure API Call --> API
+    API -- 🔍 Query Vectorization<br>📊 Semantic Search --> VectorDB
+    VectorDB -- "📋 Top-K Relevant Chunks<br>🎯 Similarity Scores" --> API
+    API -- 📝 Contextual Prompt<br>🎨 Template Engineering --> LLM
+    LLM -- 💡 Synthesized Answer<br>📚 Source Attribution --> API
+    API -- "📡 Streamed Response<br>⚡ Real-time Updates" --> SPA
+    UserFeedback["👍👎 User Feedback<br>⭐ Quality Rating"] -. 📊 Analytics Data .-> SPA
+    SPA -- 📈 Feedback Metrics<br>🔄 Continuous Learning --> API
+    API -. 📊 Telemetry .-> Monitor
+     Browser:::frontend
+     SPA:::frontend
+     LoadBalancer:::backend
+     API:::backend
+     VectorDB:::database
+     EmbedModel:::external
+     LLM:::external
+     SEC:::pipeline
+     Downloader:::pipeline
+     Parser:::pipeline
+     Chunker:::pipeline
+     Embedder:::pipeline
+     UserQuery:::userAction
+     UserFeedback:::userAction
+     Monitor:::flow
+    classDef frontend fill:#E3F2FD,stroke:#1976D2,stroke-width:3px,color:#000,font-weight:bold
+    classDef backend fill:#F3E5F5,stroke:#7B1FA2,stroke-width:3px,color:#000,font-weight:bold
+    classDef database fill:#E8F5E8,stroke:#388E3C,stroke-width:3px,color:#000,font-weight:bold
+    classDef external fill:#FFF3E0,stroke:#F57C00,stroke-width:3px,color:#000,font-weight:bold
+    classDef pipeline fill:#FFEBEE,stroke:#D32F2F,stroke-width:3px,color:#000,font-weight:bold
+    classDef flow fill:#transparent,stroke:#455A64,stroke-width:2px,stroke-dasharray: 5 5
+    classDef userAction fill:#F1F8E9,stroke:#689F38,stroke-width:2px,color:#000
+    style Monitor fill:#f0f9ff,stroke:#0369a1,stroke-width:3px,rx:15,ry:15
+    style UI fill:#f8fafc,stroke:#475569,stroke-width:3px,rx:15,ry:15
+    style GCP fill:#f1f5f9,stroke:#334155,stroke-width:3px,rx:15,ry:15
+    style External fill:#fefce8,stroke:#a16207,stroke-width:3px,rx:15,ry:15
+    style Pipeline fill:#fef2f2,stroke:#b91c1c,stroke-width:3px,rx:15,ry:15
